@@ -31,15 +31,6 @@
   when: ansible_os_family == 'RedHat'
   tags:
     with_pkg
-    
-- name: enable extras repo on centos
-  yum_repository:
-    name: extras
-    state: present
-    enabled: yes
-  when: ansible_distribution == 'CentOS'
-  tags:
-    with_pkg
 
 - name: install pip on redhat
   yum:
