@@ -290,47 +290,84 @@
     command: "docker rm -f {{ item }}"
     with_items: "{{ prepare_containers.stdout_lines }}"
 
-  - name: see if ceph-disk-created data partitions are present
-    shell: |
-      ls /dev/disk/by-partlabel | grep -q "ceph.*.data"
-    failed_when: false
-    register: ceph_data_partlabels
+    #  - name: see if ceph-disk-created data partitions are present
+    #    shell: |
+    #      ls /dev/disk/by-partlabel | grep -q "ceph.*.data"
+    #    failed_when: false
+    #    register: ceph_data_partlabels
+    #
+    #  - name: see if ceph-disk-created block partitions are present
+    #    shell: |
+    #      ls /dev/disk/by-partlabel | grep -q "ceph.*block$"
+    #    failed_when: false
+    #    register: ceph_block_partlabels
+    #
+    #  - name: see if ceph-disk-created journal partitions are present
+    #    shell: |
+    #      ls /dev/disk/by-partlabel | grep -q "ceph.*.journal"
+    #    failed_when: false
+    #    register: ceph_journal_partlabels
+    #
+    #  - name: see if ceph-disk-created block db partitions are present
+    #    shell: |
+    #      ls /dev/disk/by-partlabel | grep -q "ceph.*.block.db"
+    #    failed_when: false
+    #    register: ceph_db_partlabels
+    #
+    #  - name: see if ceph-disk-created block wal partitions are present
+    #    shell: |
+    #      ls /dev/disk/by-partlabel | grep -q "ceph.*.block.wal"
+    #    failed_when: false
+    #    register: ceph_wal_partlabels
+    #
+    #  - name: see if ceph-disk-created lockbox partitions are present
+    #    shell: |
+    #      ls /dev/disk/by-partlabel | grep -q "ceph.*.lockbox"
+    #    failed_when: false
+    #    register: ceph_lockbox_partlabels
+    #
+    #  # NOTE(leseb): hope someone will find a more elegant way one day...
+    #  - name: see if encrypted partitions are present
+    #    shell: |
+    #      blkid -t TYPE=crypto_LUKS -s PARTLABEL -s PARTUUID | grep "ceph.*." | grep -o PARTUUID.* | cut -d '"' -f 2
+    #    register: encrypted_ceph_partuuid
 
-  - name: see if ceph-disk-created block partitions are present
-    shell: |
-      ls /dev/disk/by-partlabel | grep -q "ceph.*block$"
-    failed_when: false
-    register: ceph_block_partlabels
 
-  - name: see if ceph-disk-created journal partitions are present
+  - name: get ceph data partitions
     shell: |
-      ls /dev/disk/by-partlabel | grep -q "ceph.*.journal"
+      blkid -o device -t PARTLABEL="ceph data"
     failed_when: false
-    register: ceph_journal_partlabels
+    register: ceph_data_partition_to_erase_path
 
-  - name: see if ceph-disk-created block db partitions are present
+  - name: get ceph lockbox partitions
     shell: |
-      ls /dev/disk/by-partlabel | grep -q "ceph.*.block.db"
+      blkid -o device -t PARTLABEL="ceph lockbox"
     failed_when: false
-    register: ceph_db_partlabels
+    register: ceph_lockbox_partition_to_erase_path
 
-  - name: see if ceph-disk-created block wal partitions are present
+  - name: get ceph block partitions
     shell: |
-      ls /dev/disk/by-partlabel | grep -q "ceph.*.block.wal"
+      blkid -o device -t PARTLABEL="ceph block"
     failed_when: false
-    register: ceph_wal_partlabels
+    register: ceph_block_partition_to_erase_path
 
-  - name: see if ceph-disk-created lockbox partitions are present
+  - name: get ceph journal partitions
     shell: |
-      ls /dev/disk/by-partlabel | grep -q "ceph.*.lockbox"
+      blkid -o device -t PARTLABEL="ceph journal"
     failed_when: false
-    register: ceph_lockbox_partlabels
+    register: ceph_journal_partition_to_erase_path
 
-  # NOTE(leseb): hope someone will find a more elegant way one day...
-  - name: see if encrypted partitions are present
+  - name: get ceph db partitions
     shell: |
-      blkid -t TYPE=crypto_LUKS -s PARTLABEL -s PARTUUID | grep "ceph.*." | grep -o PARTUUID.* | cut -d '"' -f 2
-    register: encrypted_ceph_partuuid
+      blkid -o device -t PARTLABEL="ceph block.db"
+    failed_when: false
+    register: ceph_db_partition_to_erase_path
+
+  - name: get ceph wal partitions
+    shell: |
+      blkid -o device -t PARTLABEL="ceph block.wal"
+    failed_when: false
+    register: ceph_wal_partition_to_erase_path
 
   - name: remove osd mountpoint tree
     file:
@@ -339,47 +376,43 @@
     register: remove_osd_mountpoints
     ignore_errors: true
 
-  - name: get ceph data partitions
-    shell: |
-      blkid | awk -F: '/ceph data/ { print $1 }'
-    when: ceph_data_partlabels.rc == 0
-    failed_when: false
-    register: ceph_data_partition_to_erase_path
+  - name: set_fact combined_devices_list
+    set_fact:
+      combined_devices_list: "{{ ceph_data_partition_to_erase_path.stdout_lines +
+                                 ceph_lockbox_partition_to_erase_path.stdout_lines +
+                                 ceph_block_partition_to_erase_path.stdout_lines +
+                                 ceph_journal_partition_to_erase_path.stdout_lines +
+                                 ceph_db_partition_to_erase_path.stdout_lines +
+                                 ceph_wal_partition_to_erase_path.stdout_lines }}"
 
-  - name: get ceph lockbox partitions
-    shell: |
-      blkid | awk '/ceph lockbox/ { sub (":", "", $1); print $1 }'
-    when: ceph_lockbox_partlabels.rc == 0
-    failed_when: false
-    register: ceph_lockbox_partition_to_erase_path
+  - name: wipe all partitions
+    shell: dd if=/dev/zero of={{ item }} bs=4k count=1
+    with_items: "{{ combined_devices_list }}"
 
-  - name: get ceph block partitions
-    shell: |
-      blkid | awk '/ceph block"/ { sub (":", "", $1); print $1 }'
-    when: ceph_block_partlabels.rc == 0
-    failed_when: false
-    register: ceph_block_partition_to_erase_path
+  - name: resolve parent device
+    shell: echo /dev/$(lsblk -no pkname --nodeps "{{ item }}")
+    register: tmp_resolved_parent_device
+    with_items:
+      - "{{ combined_devices_list }}"
 
-  - name: get ceph journal partitions
-    shell: |
-      blkid | awk '/ceph journal/ { sub (":", "", $1); print $1 }'
-    when: ceph_journal_partlabels.rc == 0
-    failed_when: false
-    register: ceph_journal_partition_to_erase_path
+  - name: set_fact resolved_parent_device
+    set_fact:
+      resolved_parent_device: "{{ tmp_resolved_parent_device.results | map(attribute='stdout') | list | unique }}"
 
-  - name: get ceph db partitions
-    shell: |
-      blkid | awk '/ceph block.db/ { sub (":", "", $1); print $1 }'
-    when: ceph_db_partlabels.rc == 0
-    failed_when: false
-    register: ceph_db_partition_to_erase_path
-
-  - name: get ceph wal partitions
-    shell: |
-      blkid | awk '/ceph block.wal/ { sub (":", "", $1); print $1 }'
-    when: ceph_wal_partlabels.rc == 0
-    failed_when: false
-    register: ceph_wal_partition_to_erase_path
+  # - name: zap on root device
+  #   shell: |
+  #     if parted -s "{{ item }}" print | grep -sq boot; then
+  #       echo "Looks like {{ item }} has a boot partition,"
+  #       echo "if you want to delete specific partitions point to the partition instead of the raw device"
+  #       echo "Do not use your system disk!"
+  #       exit 1
+  #     fi
+  #     sgdisk -Z "{{ item }}"
+  #     dd if=/dev/zero of="{{ item }}" bs=1M count=200
+  #     parted -s "{{ item }}" mklabel gpt
+  #     udevadm settle --timeout=600
+  #   with_items:
+  #     - "{{ resolved_parent_device }}"
 
   - name: zap ceph osd disks
     shell: |
@@ -391,14 +424,7 @@
       {{ ceph_docker_registry }}/{{ ceph_docker_image }}:{{ ceph_docker_image_tag }} \
       zap_device
     with_items:
-      - "{{ ceph_data_partition_to_erase_path.stdout_lines | default([]) }}"
-      - "{{ ceph_lockbox_partition_to_erase_path.stdout_lines | default([]) }}"
-      - "{{ ceph_block_partition_to_erase_path.stdout_lines | default([]) }}"
-      - "{{ ceph_journal_partition_to_erase_path.stdout_lines | default([]) }}"
-      - "{{ ceph_db_partition_to_erase_path.stdout_lines | default([]) }}"
-      - "{{ ceph_wal_partition_to_erase_path.stdout_lines | default([]) }}"
-    when:
-      - (ceph_data_partlabels.rc == 0 or ceph_block_partlabels.rc == 0 or ceph_journal_partlabels.rc == 0 or ceph_db_partlabels.rc == 0 or ceph_wal_partlabels.rc == 0)
+      - "{{ combined_devices_list }}"
 
   - name: wait until the zap containers die
     shell: |
