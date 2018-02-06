@@ -69,6 +69,20 @@
   delay: 15
   until: multi_mds_socket.rc == 0
 
+- name: wait for mds socket to exist (fqdn)
+  command: "{{ docker_exec_cmd }} stat /var/run/ceph/{{ cluster }}-mds.{{ ansible_fqdn }}.asok"
+  register: multi_mds_socket_fqdn
+  retries: 5
+  delay: 15
+  until: multi_mds_socket_fqdn.rc == 0
+
+- name: fail if mds socket doesn't exist
+  fail:
+    msg: "no socket found for mds daemon"
+  when:
+    - multi_mds_socket.rc != 0
+    - multi_mds_socket_fqdn.rc != 0
+
 - name: enable multimds if requested when mon is containerized
   command: "{{ docker_exec_cmd }} ceph --cluster {{ cluster }} fs set {{ cephfs }} allow_multimds true --yes-i-really-mean-it"
   changed_when: false

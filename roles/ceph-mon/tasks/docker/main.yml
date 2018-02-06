@@ -11,7 +11,23 @@
   register: monitor_socket
   retries: 5
   delay: 15
+  failed_when: false
   until: monitor_socket.rc == 0
+
+- name: wait for monitor socket to exist (fqdn)
+  command: docker exec ceph-mon-{{ ansible_hostname }} stat /var/run/ceph/{{ cluster }}-mon.{{ ansible_fqdn }}.asok
+  register: monitor_socket_fqdn
+  retries: 5
+  delay: 15
+  failed_when: false
+  until: monitor_socket_fqdn.rc == 0
+
+- name: fail if monitor socket doesn't exist
+  fail:
+    msg: "no socket found for monitor daemon"
+  when:
+    - monitor_socket.rc != 0
+    - monitor_socket_fqdn.rc != 0
 
 - name: ipv4 - force peer addition as potential bootstrap peer for cluster bringup - monitor_interface
   command: docker exec ceph-mon-{{ ansible_hostname }} ceph --admin-daemon /var/run/ceph/{{ cluster }}-mon.{{ monitor_name }}.asok add_bootstrap_peer_hint {{ hostvars[groups[mon_group_name][0]]['ansible_' + monitor_interface].ipv4.address }}
