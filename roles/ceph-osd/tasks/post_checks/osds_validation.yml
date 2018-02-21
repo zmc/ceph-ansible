@@ -1,0 +1,29 @@
+---
+- name: set_fact num_osd_device
+  set_fact:
+    num_osd_device: "{{ (num_osd_device | default(0)|int) + (hostvars[item]['devices']|length) }}"
+  with_items: "{{ groups[osd_group_name] }}"
+  delegate_to: "{{ groups[mon_group_name][0] }}"
+
+- name: set_fact docker_exec_cmd
+  set_fact:
+    docker_exec_cmd: docker exec ceph-mon-"{{ hostvars[groups[mon_group_name][0]]['ansible_hostname'] }}"
+
+- name: get cluster status
+  command: "{{ docker_exec_cmd }} ceph --cluster {{ cluster }} -s -f json"
+  register: cluster_status
+  delegate_to: "{{ groups[mon_group_name][0] }}"
+
+- name: set_fact osdmap
+  set_fact:
+    osdmap: "{{ (cluster_status.stdout|from_json).osdmap.osdmap }}"
+  delegate_to: "{{ groups[mon_group_name][0] }}"
+
+- name: fail if num_up_osds < {{ critical_num_up_osds * 100 }}%
+  fail:
+    msg:
+      - "The actual number of osds UP is too low"
+      - "{{ osdmap.num_up_osds }} out of {{ num_osd_device|int }} OSDs are UP ({{ (osdmap.num_up_osds / num_osd_device|int) * 100 }}%)"
+  delegate_to: "{{ groups[mon_group_name][0] }}"
+  when:
+    - (osdmap.num_up_osds / num_osd_device) < {{ critical_num_up_osds }}

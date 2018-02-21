@@ -1,0 +1,6 @@
+---
+- name: include osds_validation.yml
+  include: osds_validation.yml
+  when:
+    - validate_osds
+    - inventory_hostname == ansible_play_hosts | last
