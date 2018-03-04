@@ -8,6 +8,8 @@ mgr0
 
 [osds]
 osd0
+osd1
+osd2
 
 [mdss]
 mds0
