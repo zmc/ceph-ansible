@@ -82,7 +82,10 @@ class ActionModule(ActionBase):
                     notario.validate(host_vars, non_collocated_osd_scenario, defined_keys=True)
 
                 if host_vars["osd_scenario"] == "lvm":
-                    notario.validate(host_vars, lvm_osd_scenario, defined_keys=True)
+                    if notario_store['osd_objectstore'] == 'filestore':
+                        notario.validate(host_vars, lvm_filestore_scenario, defined_keys=True)
+                    elif notario_store['osd_objectstore'] == 'bluestore':
+                        notario.validate(host_vars, lvm_bluestore_scenario, defined_keys=True)
 
         except Invalid as error:
             display.vvvv("Notario Failure: %s" % str(error))
@@ -225,14 +228,20 @@ non_collocated_osd_scenario = (
     ("devices", iterables.AllItems(types.string)),
 )
 
-lvm_osd_scenario = ("lvm_volumes", iterables.AllItems((
+lvm_filestore_scenario = ("lvm_volumes", iterables.AllItems((
+    (optional('crush_device_class'), types.string),
+    ('data', types.string),
+    (optional('data_vg'), types.string),
+    ('journal', optional(validate_lvm_volumes)),
+    (optional('journal_vg'), types.string),
+)))
+
+lvm_bluestore_scenario = ("lvm_volumes", iterables.AllItems((
     (optional('crush_device_class'), types.string),
     ('data', types.string),
     (optional('data_vg'), types.string),
     (optional('db'), types.string),
     (optional('db_vg'), types.string),
-    ('journal', optional(validate_lvm_volumes)),
-    (optional('journal_vg'), types.string),
     (optional('wal'), types.string),
     (optional('wal_vg'), types.string),
 )))
