@@ -1,7 +1,7 @@
 ---
 - name: list existing pool(s)
   command: >
-    {{ hostvars[groups[mon_group_name][0]]]['docker_exec_cmd'] | default('') }} ceph --cluster {{ cluster }}
+    {{ hostvars[groups[mon_group_name][0]]['docker_exec_cmd'] | default('') }} ceph --cluster {{ cluster }}
     osd pool get {{ item.name }} size
   with_items: "{{ openstack_pools | unique }}"
   register: created_pools

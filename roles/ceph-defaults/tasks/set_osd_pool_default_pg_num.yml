@@ -13,11 +13,6 @@
     - pool_default_pg_num is not defined
     - ceph_conf_overrides.get('global', {}).get('osd_pool_default_pg_num', False) == False
 
-- name: set_fact osd_pool_default_pg_num with pool_default_pg_num (backward compatibility)
-  set_fact:
-    osd_pool_default_pg_num: "{{ pool_default_pg_num }}"
-  when: pool_default_pg_num is defined
-
 - name: set_fact osd_pool_default_pg_num with default_pool_default_pg_num.stdout
   set_fact:
     osd_pool_default_pg_num: "{{ (default_pool_default_pg_num.stdout | from_json).osd_pool_default_pg_num }}"
