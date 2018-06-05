@@ -20,6 +20,7 @@ ceph_release_num:
   luminous: 12
   mimic: 13
 
+
 # Directory to fetch cluster fsid, keys etc...
 fetch_directory: fetch/
 
