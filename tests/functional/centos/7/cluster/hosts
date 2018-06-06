@@ -8,22 +8,3 @@ ceph-mgr0
 
 [osds]
 ceph-osd0 osd_crush_location="{ 'root': 'HDD', 'rack': 'mon-rackkkk', 'pod': 'monpod', 'host': 'ceph-osd0' }"
-
-[mdss]
-ceph-mds0
-
-[rgws]
-ceph-rgw0
-
-[clients]
-ceph-client0
-ceph-client1
-
-[nfss]
-ceph-nfs0
-
-[rbdmirrors]
-ceph-rbd-mirror0
-
-[iscsi-gws]
-ceph-iscsi-gw0 ceph_repository="dev"
