@@ -25,7 +25,7 @@
         - osd_scenario == 'lvm'
 
     - name: get number of osds for lvm-batch scenario
-      command: "ceph-volume lvm batch --report --format=json --osds-per-device osds_per_device {{ devices | join(' ') }}"
+      command: "ceph-volume --cluster {{ cluster }} lvm batch --report --format=json --osds-per-device {{ osds_per_device | default(1) }} {{ devices | join(' ') }}"
       register: lvm_batch_devices
       when:
         - devices | default([]) | length > 0
