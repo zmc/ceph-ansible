@@ -76,8 +76,14 @@ def node(host, request):
     if not num_osds:
         num_osds = len(ansible_vars.get("lvm_volumes", []))
     osds_per_device = ansible_vars.get("osds_per_device", 1)
+    print "osds_per_device: %s" osds_per_device
+    print "num_osds: %s" num_osds
     num_osds = num_osds * osds_per_device
+    print "devices: %s" % str(ansible_vars.get('devices'))
+    print "lvm_volumes: %s" % str(ansible_vars.get('lvm_volumes'))
 
+    if num_osds == 0:
+        raise SystemExit('Unable to continue with 0 osds')
     # If number of devices doesn't map to number of OSDs, allow tests to define
     # that custom number, defaulting it to ``num_devices``
     num_osds = ansible_vars.get('num_osds', num_osds)
