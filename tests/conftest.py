@@ -81,6 +81,8 @@ def node(host, request):
     num_osds = num_osds * osds_per_device
     print "devices: %s" % str(ansible_vars.get('devices'))
     print "lvm_volumes: %s" % str(ansible_vars.get('lvm_volumes'))
+    from pprint import pprint
+    pprint(ansible_vars)
 
     if num_osds == 0:
         raise SystemExit('Unable to continue with 0 osds')
