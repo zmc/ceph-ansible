@@ -76,8 +76,8 @@ def node(host, request):
     if not num_osds:
         num_osds = len(ansible_vars.get("lvm_volumes", []))
     osds_per_device = ansible_vars.get("osds_per_device", 1)
-    print "osds_per_device: %s" osds_per_device
-    print "num_osds: %s" num_osds
+    print "osds_per_device: %s" % osds_per_device
+    print "num_osds: %s"  % num_osds
     num_osds = num_osds * osds_per_device
     print "devices: %s" % str(ansible_vars.get('devices'))
     print "lvm_volumes: %s" % str(ansible_vars.get('lvm_volumes'))
