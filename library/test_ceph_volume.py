@@ -237,6 +237,7 @@ class TestCephVolumeModule(object):
                                  'batch',
                                  '--filestore',
                                  '--yes',
+                                 '--prepare',
                                  '--journal-size',
                                  '100',
                                  '/dev/sda',
