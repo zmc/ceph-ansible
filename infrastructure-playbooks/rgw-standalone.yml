@@ -5,20 +5,12 @@
 # and collect keys from a mon to bootstrap the rgw nodes
 - hosts: mons
   become: True
-  tasks:
-  - import_role:
-      name: ceph-defaults
-      private: false
-  - import_role:
-      name: ceph-fetch-keys
-      private: false
+  roles:
+    - ceph-defaults
+    - ceph-fetch-keys
 
 - hosts: rgws
   become: True
-  tasks:
-  - import_role:
-      name: ceph-defaults
-      private: false
-  - import_role:
-      name: ceph-rgw
-      private: false
+  roles:
+    - ceph-defaults
+    - ceph-rgw

@@ -23,19 +23,22 @@
     - debug: msg="gather facts on all Ceph hosts for following reference"
 
 - name: confirm whether user really meant to remove monitor from the ceph cluster
+
   hosts:
     - localhost
+
   become: true
+
   vars_prompt:
     - name: ireallymeanit
       prompt: Are you sure you want to shrink the cluster?
       default: 'no'
       private: no
+
   vars:
     mon_group_name: mons
 
-  tasks:
-    # pre task for following import
+  pre_tasks:
     - name: exit playbook, if only one monitor is present in cluster
       fail:
         msg: "You are about to shrink the only monitor present in the cluster.
@@ -67,11 +70,10 @@
       when:
         - ireallymeanit != 'yes'
 
-    - import_role:
-        name: ceph-defaults
-        private: false
+  roles:
+    - ceph-defaults
 
-    # post_tasks for preceding import
+  post_tasks:
     - name: pick a monitor different than the one we want to remove
       set_fact:
         mon_host: "{{ item }}"
