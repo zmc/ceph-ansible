@@ -2,7 +2,7 @@
 # {{ ansible_managed }}
 
 [global]
-{% if not cephx %}
+{% if not cephx %} # toto
 auth cluster required = none
 auth service required = none
 auth client required = none

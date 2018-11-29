@@ -33,3 +33,4 @@ openstack_cinder_pool:
 openstack_pools:
   - "{{ openstack_glance_pool }}"
   - "{{ openstack_cinder_pool }}"
+is_hci: true
