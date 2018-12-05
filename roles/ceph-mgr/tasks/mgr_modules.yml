@@ -26,3 +26,11 @@
   delegate_to: "{{ groups[mon_group_name][0] }}"
   when:
     - (item in _disabled_ceph_mgr_modules or _disabled_ceph_mgr_modules == [])
+
+- name: Enable ceph-mgr modules for ceph dashboard
+  command: "{{ docker_exec_cmd_mgr | default('') }} ceph --cluster {{ cluster }} mgr module enable {{ item }}"
+  with_items:
+    - prometheus
+    - dashboard
+  delegate_to: "{{ groups[mon_group_name][0] }}"
+  when: dashboard.enabled
