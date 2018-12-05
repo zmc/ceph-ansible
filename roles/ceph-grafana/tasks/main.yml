@@ -1,0 +1,7 @@
+---
+- include: setup_container.yml
+
+- include: configure_firewall.yml
+  when: configure_firewall
+
+- include: configure_grafana.yml

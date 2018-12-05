@@ -474,3 +474,43 @@
       delegate_to: "{{ groups[mon_group_name][0] }}"
       run_once: true
       when: not ceph_status.failed
+
+### TODO: Fix the module enablement: TODO ###
+- hosts:
+  - mgrs
+  become: true
+  roles:
+  - ceph-mgr
+
+- hosts:
+  - ceph-grafana
+  # These are roles used by ceph-ansible
+  - mons
+  - agents
+  - osds
+  - mdss
+  - rgws
+  - nfss
+  - restapis
+  - rbdmirrors
+  - clients
+  - mgrs
+  - iscsigws
+  # This role is (so far) only used for testing
+  - cluster
+  become: true
+  roles:
+  - ceph-node-exporter
+
+- hosts:
+  - ceph-grafana
+  become: true
+  roles:
+  - ceph-prometheus
+  - ceph-grafana
+
+- hosts:
+  - mgrs[0]
+  become: true
+  roles:
+  - ceph-dashboard

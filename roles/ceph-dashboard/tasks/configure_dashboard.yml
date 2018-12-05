@@ -1,0 +1,140 @@
+---
+- name: Check to see if the mgr is containerized
+  command: "docker inspect {{ item }}"
+  with_items:
+    - "ceph-mgr@{{ ansible_hostname }}"
+    - "ceph-mgr-{{ ansible_hostname }}"
+  register: mgr_container
+  failed_when: false
+
+- name: Choose the correct container name
+  set_fact:
+    container_name: "{% for res in mgr_container.results if res.rc == 0 %}{{ res.item }}{% endfor %}"
+    mgr_prefix: "" # Set the default value for mgr_prefix
+
+- name: Prefix the mgr command with a docker command
+  set_fact:
+    mgr_prefix: "docker exec {{ container_name }}"
+  when: container_name != ""
+
+- name: Disable SSL for dashboard
+  shell: |
+    {{ mgr_prefix }} ceph config set mgr mgr/dashboard/ssl false || \
+    {{ mgr_prefix }} ceph config-key set mgr/dashboard/ssl false
+  when: dashboard.protocol != "https"
+
+- name: Enable SSL for dashboard
+  shell: |
+    {{ mgr_prefix }} ceph config set mgr mgr/dashboard/ssl true || \
+    {{ mgr_prefix }} ceph config-key set mgr/dashboard/ssl true
+  when: dashboard.protocol == "https"
+
+- name: Copy dashboard SSL certificate file
+  copy:
+    src: "{{ dashboard.crt }}"
+    dest: "/etc/ceph/ceph-dashboard.crt"
+    owner: root
+    group: root
+    mode: 0644
+  when:
+    - dashboard.crt
+    - dashboard.protocol == "https"
+
+- name: Copy dashboard SSL certificate key
+  copy:
+    src: "{{ dashboard.key }}"
+    dest: "/etc/ceph/ceph-dashboard.key"
+    owner: root
+    group: root
+    mode: 0644
+  when:
+    - dashboard.key
+    - dashboard.protocol == "https"
+
+- name: Generate a Self Signed OpenSSL certificate for dashboard
+  shell: |
+    test -f /etc/ceph/ceph-dashboard.key -a -f /etc/ceph/ceph-dashboard.crt || \
+    openssl req -new -nodes -x509 -subj '/O=IT/CN=ceph-dashboard' -days 3650 -keyout /etc/ceph/ceph-dashboard.key -out /etc/ceph/ceph-dashboard.crt -extensions v3_ca
+  when:
+    - dashboard.protocol == "https"
+    - not dashboard.key or not dashboard.crt
+
+- name: Import dashboard certificate file
+  command: "{{ mgr_prefix }} ceph config-key set mgr/dashboard/crt -i /etc/ceph/ceph-dashboard.crt"
+  when: dashboard.protocol == "https"
+
+- name: Import dashboard certificate key
+  command: "{{ mgr_prefix }} ceph config-key set mgr/dashboard/key -i /etc/ceph/ceph-dashboard.key"
+  when: dashboard.protocol == "https"
+
+- name: "Set the dashboard port ({{ dashboard.port }})"
+  shell: |
+    {{ mgr_prefix }} ceph config set mgr mgr/dashboard/server_port {{ dashboard.port }} || \
+    {{ mgr_prefix }} ceph config-key set mgr/dashboard/server_port {{ dashboard.port }}
+
+- name: Disable mgr dashboard module (restart)
+  command: "{{ mgr_prefix }} ceph mgr module disable dashboard"
+
+- name: Enable mgr dashboard module (restart)
+  command: "{{ mgr_prefix }} ceph mgr module enable dashboard"
+
+- name: Set or update dashboard admin username and password
+  shell: |
+    if {{ mgr_prefix }} ceph dashboard ac-user-show {{ dashboard.admin_user }}; then
+      {{ mgr_prefix }} ceph dashboard ac-user-set-password {{ dashboard.admin_user }} {{ dashboard.admin_password }}
+    else
+      {{ mgr_prefix }} ceph dashboard ac-user-create {{ dashboard.admin_user }} {{ dashboard.admin_password }} administrator
+    fi
+  retries: 6
+  delay: 5
+  register: ac_result
+  until: ac_result.rc == 0
+
+- name: Set grafana url
+  command: "{{ mgr_prefix }} ceph dashboard set-grafana-api-url {{ dashboard.protocol }}://{{ groups['ceph-grafana'][0] }}:3000/"
+
+- name: Create radosgw system user
+  shell: "timeout 20 {{ mgr_prefix }} radosgw-admin user create --uid={{ dashboard.rgw_api_user_id }} --display-name='Ceph dashboard' --system"
+  register: rgw_user_output
+  until: rgw_user_output.rc == 0
+  retries: 3
+
+- name: Get the rgw access and secret keys
+  set_fact:
+    rgw_access_key: "{{ (rgw_user_output.stdout | from_json)['keys'][0]['access_key'] }}"
+    rgw_secret_key: "{{ (rgw_user_output.stdout | from_json)['keys'][0]['secret_key'] }}"
+
+- name: Set the rgw user
+  command: "{{ mgr_prefix }} ceph dashboard set-rgw-api-user-id {{ dashboard.rgw_api_user_id }}"
+
+- name: Set the rgw access key
+  command: "{{ mgr_prefix }} ceph dashboard set-rgw-api-access-key {{ rgw_access_key }}"
+
+- name: Set the rgw secret key
+  command: "{{ mgr_prefix }} ceph dashboard set-rgw-api-secret-key {{ rgw_secret_key }}"
+
+- name: Set the rgw host
+  command: "{{ mgr_prefix }} ceph dashboard set-rgw-api-host {{ dashboard.rgw_api_host }}"
+  when: dashboard.rgw_api_host
+
+- name: Set the rgw port
+  command: "{{ mgr_prefix }} ceph dashboard set-rgw-api-port {{ dashboard.rgw_api_port }}"
+  when: dashboard.rgw_api_port
+
+- name: Set the rgw scheme
+  command: "{{ mgr_prefix }} ceph dashboard set-rgw-api-scheme {{ dashboard.rgw_api_scheme }}"
+  when: dashboard.rgw_api_scheme
+
+- name: Set the rgw admin resource
+  command: "{{ mgr_prefix }} ceph dashboard set-rgw-api-admin-resource {{ dashboard.rgw_api_admin_resource }}"
+  when: dashboard.rgw_api_admin_resource
+
+- name: Disable ssl verification for rgw
+  command: "{{ mgr_prefix }} ceph dashboard set-rgw-api-ssl-verify False"
+  when: dashboard.rgw_api_no_ssl_verify
+
+- name: Disable mgr dashboard module (restart)
+  command: "{{ mgr_prefix }} ceph mgr module disable dashboard"
+
+- name: Enable mgr dashboard module (restart)
+  command: "{{ mgr_prefix }} ceph mgr module enable dashboard"
