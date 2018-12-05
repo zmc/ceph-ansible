@@ -475,13 +475,6 @@
       run_once: true
       when: not ceph_status.failed
 
-### TODO: Fix the module enablement: TODO ###
-- hosts:
-  - mgrs
-  become: true
-  roles:
-  - ceph-mgr
-
 - hosts:
   - ceph-grafana
   # These are roles used by ceph-ansible
@@ -499,18 +492,36 @@
   # This role is (so far) only used for testing
   - cluster
   become: true
-  roles:
-  - ceph-node-exporter
+  tasks:
+    - import_role:
+        name: ceph-defaults
+      tags: ['ceph_update_config']
+      when: dashboard.enabled
+    - import_role:
+        name: ceph-node-exporter
+      when: dashboard.enabled
 
-- hosts:
-  - ceph-grafana
+- hosts: ceph-grafana
   become: true
-  roles:
-  - ceph-prometheus
-  - ceph-grafana
+  tasks:
+    - import_role:
+        name: ceph-defaults
+      tags: ['ceph_update_config']
+      when: dashboard.enabled
+    - import_role:
+        name: ceph-prometheus
+      when: dashboard.enabled
+    - import_role:
+        name: ceph-grafana
+      when: dashboard.enabled
 
-- hosts:
-  - mgrs[0]
+- hosts: mgrs[0]
   become: true
-  roles:
-  - ceph-dashboard
+  tasks:
+    - import_role:
+        name: ceph-defaults
+      tags: ['ceph_update_config']
+      when: dashboard.enabled
+    - import_role:
+        name: ceph-dashboard
+      when: dashboard.enabled
