@@ -1,0 +1,22 @@
+---
+- include: setup_container.yml
+
+- name: Check firewalld status
+  shell: "systemctl show firewalld | grep UnitFileState"
+  register: firewalld_status
+  failed_when: false
+  changed_when: false
+  when: configure_firewall
+
+- name: Open ports for node_exporter
+  firewalld:
+    port: "{{ item }}"
+    zone: "{{ ceph_dashboard_firewall_zone }}"
+    state: enabled
+    immediate: true
+    permanent: true
+  with_items:
+    - 9100/tcp
+  when:
+    - configure_firewall
+    - "'enabled' in firewalld_status.stdout"

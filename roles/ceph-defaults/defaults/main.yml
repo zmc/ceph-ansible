@@ -61,6 +61,7 @@ ceph_mds_firewall_zone: public
 ceph_nfs_firewall_zone: public
 ceph_rbdmirror_firewall_zone: public
 ceph_iscsi_firewall_zone: public
+ceph_dashboard_firewall_zone: public
 
 # Generate local ceph.conf in fetch directory
 ceph_conf_local: false
@@ -645,6 +646,28 @@ openstack_keys:
   - { name: client.cinder-backup, caps: { mon: "profile rbd", osd: "profile rbd pool={{ openstack_cinder_backup_pool.name }}"}, mode: "0600" }
   - { name: client.gnocchi, caps: { mon: "profile rbd", osd: "profile rbd pool={{ openstack_gnocchi_pool.name }}"}, mode: "0600", }
   - { name: client.openstack, caps: { mon: "profile rbd", osd: "profile rbd pool={{ openstack_glance_pool.name }}, profile rbd pool={{ openstack_nova_pool.name }}, profile rbd pool={{ openstack_cinder_pool.name }}, profile rbd pool={{ openstack_cinder_backup_pool.name }}"}, mode: "0600" }
+
+
+#############
+# DASHBOARD #
+#############
+dashboard:
+  # Choose http or https
+  # For https, you should set dashboard.crt/key and grafana.crt/key
+  protocol: http
+  # We only need this for SSL (https) connections
+  crt: ''
+  key: ''
+  port: 8234
+
+grafana:
+  # You need to change these in the web UI on an already deployed machine, first
+  # New deployments work fine
+  admin_user: admin
+  admin_password: admin
+  # We only need this for SSL (https) connections
+  crt: ''
+  key: ''
 
 
 ###############

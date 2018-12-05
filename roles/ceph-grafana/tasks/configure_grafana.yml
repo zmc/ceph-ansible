@@ -1,0 +1,90 @@
+---
+- name: Make sure grafana is down
+  service:
+    name: grafana-server
+    state: stopped
+
+- name: Wait for grafana to be stopped
+  wait_for:
+    port: 3000
+    state: stopped
+
+- name: Make sure grafana configuration directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    recurse: yes
+  with_items:
+    - "/etc/grafana/provisioning/datasources"
+    - "/etc/grafana/provisioning/dashboards"
+
+- name: Write grafana.ini
+  template:
+    src: grafana.ini
+    dest: /etc/grafana/grafana.ini
+    mode: 0640
+
+- name: Write datasources provisioning config file
+  template:
+    src: datasources-ceph-dashboard.yml
+    dest: /etc/grafana/provisioning/datasources/ceph-dashboard.yml
+    mode: 0640
+
+- name: Write dashboards provisioning config file
+  template:
+    src: dashboards-ceph-dashboard.yml
+    dest: /etc/grafana/provisioning/dashboards/ceph-dashboard.yml
+    mode: 0640
+
+- name: Copy grafana SSL certificate file
+  copy:
+    src: "{{ grafana.crt }}"
+    dest: "/etc/grafana/ceph-dashboard.crt"
+    mode: 0640
+  when:
+    - grafana.crt
+    - dashboard.protocol == "https"
+
+- name: Copy grafana SSL certificate key
+  copy:
+    src: "{{ grafana.key }}"
+    dest: "/etc/grafana/ceph-dashboard.key"
+    mode: 0640
+  when:
+    - grafana.key
+    - dashboard.protocol == "https"
+
+- name: Generate a Self Signed OpenSSL certificate for dashboard
+  shell: |
+    test -f /etc/grafana/ceph-dashboard.key -a -f /etc/grafana/ceph-dashboard.crt || \
+    openssl req -new -nodes -x509 -subj '/O=IT/CN=ceph-grafana' -days 3650 -keyout /etc/grafana/ceph-dashboard.key -out /etc/grafana/ceph-dashboard.crt -extensions v3_ca
+  when:
+    - dashboard.protocol == "https"
+    - not grafana.key or not grafana.crt
+
+- name: Set owner/group on /etc/grafana
+  file:
+    path: /etc/grafana
+    state: directory
+    # This is the UID used by the grafana container
+    owner: "{{ grafana.uid }}"
+    # This group is used by the grafana rpm
+    group: "grafana"
+    recurse: true
+
+# TODO!!! Figure out how to distribute these !!!TODO
+- name: Store the dashboard files
+  copy:
+    src: "files/dashboards/"
+    dest: "{{ grafana.dashboards_path }}"
+    follow: true
+
+- name: Enable and start grafana
+  service:
+    name: grafana-server
+    state: restarted
+    enabled: true
+
+- name: Wait for grafana to start
+  wait_for:
+    port: 3000
