@@ -1,20 +1,21 @@
 ---
 - name: Check to see if the mgr is containerized
-  command: "docker inspect {{ item }}"
+  command: "{{ container_binary }}  inspect {{ item }}"
   with_items:
     - "ceph-mgr@{{ ansible_hostname }}"
     - "ceph-mgr-{{ ansible_hostname }}"
   register: mgr_container
   failed_when: false
+  changed_when: false
 
 - name: Choose the correct container name
   set_fact:
     container_name: "{% for res in mgr_container.results if res.rc == 0 %}{{ res.item }}{% endfor %}"
     mgr_prefix: "" # Set the default value for mgr_prefix
 
-- name: Prefix the mgr command with a docker command
+- name: Prefix the mgr command with a {{ container_binary }} command
   set_fact:
-    mgr_prefix: "docker exec {{ container_name }}"
+    mgr_prefix: "{{ container_binary }} exec {{ container_name }}"
   when: container_name != ""
 
 - name: Disable SSL for dashboard
@@ -61,10 +62,12 @@
 
 - name: Import dashboard certificate file
   command: "{{ mgr_prefix }} ceph config-key set mgr/dashboard/crt -i /etc/ceph/ceph-dashboard.crt"
+  changed_when: false
   when: dashboard_protocol == "https"
 
 - name: Import dashboard certificate key
   command: "{{ mgr_prefix }} ceph config-key set mgr/dashboard/key -i /etc/ceph/ceph-dashboard.key"
+  changed_when: false
   when: dashboard_protocol == "https"
 
 - name: "Set the dashboard port ({{ dashboard_port }})"
@@ -74,9 +77,11 @@
 
 - name: Disable mgr dashboard module (restart)
   command: "{{ mgr_prefix }} ceph mgr module disable dashboard"
+  changed_when: false
 
 - name: Enable mgr dashboard module (restart)
   command: "{{ mgr_prefix }} ceph mgr module enable dashboard"
+  changed_when: false
 
 - name: Set or update dashboard admin username and password
   shell: |
@@ -92,6 +97,7 @@
 
 - name: Set grafana url
   command: "{{ mgr_prefix }} ceph dashboard set-grafana-api-url {{ dashboard_protocol }}://{{ groups['ceph-grafana'][0] }}:3000/"
+  changed_when: false
 
 - name: Create radosgw system user
   shell: "timeout 20 {{ mgr_prefix }} radosgw-admin user create --uid={{ dashboard.rgw_api_user_id }} --display-name='Ceph dashboard' --system"
@@ -106,35 +112,45 @@
 
 - name: Set the rgw user
   command: "{{ mgr_prefix }} ceph dashboard set-rgw-api-user-id {{ dashboard.rgw_api_user_id }}"
+  changed_when: false
 
 - name: Set the rgw access key
   command: "{{ mgr_prefix }} ceph dashboard set-rgw-api-access-key {{ rgw_access_key }}"
+  changed_when: false
 
 - name: Set the rgw secret key
   command: "{{ mgr_prefix }} ceph dashboard set-rgw-api-secret-key {{ rgw_secret_key }}"
+  changed_when: false
 
 - name: Set the rgw host
   command: "{{ mgr_prefix }} ceph dashboard set-rgw-api-host {{ dashboard.rgw_api_host }}"
+  changed_when: false
   when: dashboard.rgw_api_host
 
 - name: Set the rgw port
   command: "{{ mgr_prefix }} ceph dashboard set-rgw-api-port {{ dashboard.rgw_api_port }}"
+  changed_when: false
   when: dashboard.rgw_api_port
 
 - name: Set the rgw scheme
   command: "{{ mgr_prefix }} ceph dashboard set-rgw-api-scheme {{ dashboard.rgw_api_scheme }}"
+  changed_when: false
   when: dashboard.rgw_api_scheme
 
 - name: Set the rgw admin resource
   command: "{{ mgr_prefix }} ceph dashboard set-rgw-api-admin-resource {{ dashboard.rgw_api_admin_resource }}"
+  changed_when: false
   when: dashboard.rgw_api_admin_resource
 
 - name: Disable ssl verification for rgw
   command: "{{ mgr_prefix }} ceph dashboard set-rgw-api-ssl-verify False"
+  changed_when: false
   when: dashboard.rgw_api_no_ssl_verify
 
 - name: Disable mgr dashboard module (restart)
   command: "{{ mgr_prefix }} ceph mgr module disable dashboard"
+  changed_when: false
 
 - name: Enable mgr dashboard module (restart)
   command: "{{ mgr_prefix }} ceph mgr module enable dashboard"
+  changed_when: false

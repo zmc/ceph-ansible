@@ -1,7 +1,10 @@
 ---
-- include: setup_container.yml
+- name: Include setup_container.yml
+  include_tasks: setup_container.yml
 
-- include: configure_firewall.yml
+- name: Include configure_firewall.yml
+  include_tasks: configure_firewall.yml
   when: configure_firewall
 
-- include: configure_grafana.yml
+- name: Include configure_grafana.yml
+  include_tasks: configure_grafana.yml

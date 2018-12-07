@@ -493,7 +493,7 @@
         name: ceph-grafana
       when: dashboard_enabled
 
-- hosts: mgrs[0]
+- hosts: mons[0]
   become: true
   tasks:
     - import_role:
