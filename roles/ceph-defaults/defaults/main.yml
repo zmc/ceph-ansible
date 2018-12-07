@@ -662,15 +662,6 @@ dashboard:
   key: ''
   port: 8234
 
-grafana:
-  # You need to change these in the web UI on an already deployed machine, first
-  # New deployments work fine
-  admin_user: admin
-  admin_password: admin
-  # We only need this for SSL (https) connections
-  crt: ''
-  key: ''
-
 
 ###############
 # DEPRECATION #
