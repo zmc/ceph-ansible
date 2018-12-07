@@ -651,16 +651,12 @@ openstack_keys:
 #############
 # DASHBOARD #
 #############
-dashboard:
-  enabled: True
-  network_name: ceph-dashboard
-  # Choose http or https
-  # For https, you should set dashboard.crt/key and grafana.crt/key
-  protocol: http
-  # We only need this for SSL (https) connections
-  crt: ''
-  key: ''
-  port: 8234
+dashboard_enabled: True
+dashboard_network_name: ceph-dashboard
+# Choose http or https
+# For https, you should set dashboard.crt/key and grafana.crt/key
+dashboard_protocol: http
+dashboard_port: 8234
 
 
 ###############

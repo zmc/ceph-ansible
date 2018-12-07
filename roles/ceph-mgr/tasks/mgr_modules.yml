@@ -33,4 +33,4 @@
     - prometheus
     - dashboard
   delegate_to: "{{ groups[mon_group_name][0] }}"
-  when: dashboard.enabled
+  when: dashboard_enabled

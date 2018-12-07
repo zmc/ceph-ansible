@@ -2,6 +2,9 @@
 dashboard:
   admin_user: admin
   admin_password: admin
+  # We only need this for SSL (https) connections
+  crt: ''
+  key: ''
   rgw_api_user_id: ceph-dashboard
   rgw_api_host: ''
   rgw_api_port: ''

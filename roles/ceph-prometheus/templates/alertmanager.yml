@@ -11,5 +11,5 @@ receivers:
 - name: 'ceph-dashboard'
   webhook_configs:
 {% for host in groups['mgrs'] %}
-  - url: 'http://{{ host }}:{{ dashboard.port }}/api/prometheus_receiver'
+  - url: 'http://{{ host }}:{{ dashboard_port }}/api/prometheus_receiver'
 {% endfor %}

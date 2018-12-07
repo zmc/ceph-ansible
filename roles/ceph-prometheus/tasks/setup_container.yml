@@ -28,7 +28,7 @@
       - "{{ alertmanager.conf_dir }}:/etc/alertmanager:Z"
       - "{{ alertmanager.data_dir }}:/alertmanager:Z"
     networks:
-      - name: "{{ dashboard.network_name }}"
+      - name: "{{ dashboard_network_name }}"
     keep_volumes: true
     pull: true
     cpu_period: "{{ alertmanager.container_cpu_period }}"
@@ -65,7 +65,7 @@
       - "{{ prometheus.conf_dir }}:/etc/prometheus:Z"
       - "{{ prometheus.data_dir }}:/prometheus:Z"
     networks:
-      - name: "{{ dashboard.network_name }}"
+      - name: "{{ dashboard_network_name }}"
     user: "{{ prometheus.user_id }}"
     keep_volumes: true
     pull: true
