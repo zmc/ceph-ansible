@@ -1,5 +1,10 @@
 ---
 grafana:
+  admin_user: admin
+  admin_password: admin
+  # We only need this for SSL (https) connections
+  crt: ''
+  key: ''
   container_image: "grafana/grafana:latest"
   container_cpu_period: 100000
   container_cpu_cores: 2
