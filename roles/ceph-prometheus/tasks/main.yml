@@ -31,4 +31,5 @@
     owner: "root"
   notify: Service handler
 
-- include: setup_container.yml
+- name: Include setup_container.yml
+  include_tasks: setup_container.yml

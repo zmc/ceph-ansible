@@ -1,5 +1,6 @@
 ---
-- include: setup_container.yml
+- name: Include setup_container.yml
+  include_tasks: setup_container.yml
 
 - name: Check firewalld status
   shell: "systemctl show firewalld | grep UnitFileState"

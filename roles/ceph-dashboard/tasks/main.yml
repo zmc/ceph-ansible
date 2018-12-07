@@ -1,5 +1,6 @@
 ---
-- include: configure_dashboard.yml
+- name: Include configure_dashboard.yml
+  include_tasks: configure_dashboard.yml
 
 - name: Print dashboard URL
   debug:
