@@ -653,6 +653,7 @@ openstack_keys:
 #############
 dashboard:
   enabled: True
+  network_name: ceph-dashboard
   # Choose http or https
   # For https, you should set dashboard.crt/key and grafana.crt/key
   protocol: http
