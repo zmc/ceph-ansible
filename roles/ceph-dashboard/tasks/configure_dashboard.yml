@@ -21,13 +21,13 @@
   shell: |
     {{ mgr_prefix }} ceph config set mgr mgr/dashboard/ssl false || \
     {{ mgr_prefix }} ceph config-key set mgr/dashboard/ssl false
-  when: dashboard.protocol != "https"
+  when: dashboard_protocol != "https"
 
 - name: Enable SSL for dashboard
   shell: |
     {{ mgr_prefix }} ceph config set mgr mgr/dashboard/ssl true || \
     {{ mgr_prefix }} ceph config-key set mgr/dashboard/ssl true
-  when: dashboard.protocol == "https"
+  when: dashboard_protocol == "https"
 
 - name: Copy dashboard SSL certificate file
   copy:
@@ -38,7 +38,7 @@
     mode: 0644
   when:
     - dashboard.crt
-    - dashboard.protocol == "https"
+    - dashboard_protocol == "https"
 
 - name: Copy dashboard SSL certificate key
   copy:
@@ -49,28 +49,28 @@
     mode: 0644
   when:
     - dashboard.key
-    - dashboard.protocol == "https"
+    - dashboard_protocol == "https"
 
 - name: Generate a Self Signed OpenSSL certificate for dashboard
   shell: |
     test -f /etc/ceph/ceph-dashboard.key -a -f /etc/ceph/ceph-dashboard.crt || \
     openssl req -new -nodes -x509 -subj '/O=IT/CN=ceph-dashboard' -days 3650 -keyout /etc/ceph/ceph-dashboard.key -out /etc/ceph/ceph-dashboard.crt -extensions v3_ca
   when:
-    - dashboard.protocol == "https"
+    - dashboard_protocol == "https"
     - not dashboard.key or not dashboard.crt
 
 - name: Import dashboard certificate file
   command: "{{ mgr_prefix }} ceph config-key set mgr/dashboard/crt -i /etc/ceph/ceph-dashboard.crt"
-  when: dashboard.protocol == "https"
+  when: dashboard_protocol == "https"
 
 - name: Import dashboard certificate key
   command: "{{ mgr_prefix }} ceph config-key set mgr/dashboard/key -i /etc/ceph/ceph-dashboard.key"
-  when: dashboard.protocol == "https"
+  when: dashboard_protocol == "https"
 
-- name: "Set the dashboard port ({{ dashboard.port }})"
+- name: "Set the dashboard port ({{ dashboard_port }})"
   shell: |
-    {{ mgr_prefix }} ceph config set mgr mgr/dashboard/server_port {{ dashboard.port }} || \
-    {{ mgr_prefix }} ceph config-key set mgr/dashboard/server_port {{ dashboard.port }}
+    {{ mgr_prefix }} ceph config set mgr mgr/dashboard/server_port {{ dashboard_port }} || \
+    {{ mgr_prefix }} ceph config-key set mgr/dashboard/server_port {{ dashboard_port }}
 
 - name: Disable mgr dashboard module (restart)
   command: "{{ mgr_prefix }} ceph mgr module disable dashboard"
@@ -91,7 +91,7 @@
   until: ac_result.rc == 0
 
 - name: Set grafana url
-  command: "{{ mgr_prefix }} ceph dashboard set-grafana-api-url {{ dashboard.protocol }}://{{ groups['ceph-grafana'][0] }}:3000/"
+  command: "{{ mgr_prefix }} ceph dashboard set-grafana-api-url {{ dashboard_protocol }}://{{ groups['ceph-grafana'][0] }}:3000/"
 
 - name: Create radosgw system user
   shell: "timeout 20 {{ mgr_prefix }} radosgw-admin user create --uid={{ dashboard.rgw_api_user_id }} --display-name='Ceph dashboard' --system"

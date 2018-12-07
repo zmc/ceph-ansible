@@ -42,7 +42,7 @@
       - "/etc/grafana:/etc/grafana:Z"
       - "/var/lib/grafana:/var/lib/grafana:Z"
     networks:
-      - name: "{{ dashboard.network_name }}"
+      - name: "{{ dashboard_network_name }}"
     keep_volumes: true
     pull: true
     cpu_period: "{{ grafana.container_cpu_period }}"

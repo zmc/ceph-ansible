@@ -62,7 +62,7 @@
         name: ceph-infra
     - import_role:
         name: ceph-node-exporter
-      when: dashboard.enabled
+      when: dashboard_enabled
 
 - hosts: mons
   gather_facts: false
@@ -485,13 +485,13 @@
     - import_role:
         name: ceph-defaults
       tags: ['ceph_update_config']
-      when: dashboard.enabled
+      when: dashboard_enabled
     - import_role:
         name: ceph-prometheus
-      when: dashboard.enabled
+      when: dashboard_enabled
     - import_role:
         name: ceph-grafana
-      when: dashboard.enabled
+      when: dashboard_enabled
 
 - hosts: mgrs[0]
   become: true
@@ -499,7 +499,7 @@
     - import_role:
         name: ceph-defaults
       tags: ['ceph_update_config']
-      when: dashboard.enabled
+      when: dashboard_enabled
     - import_role:
         name: ceph-dashboard
-      when: dashboard.enabled
+      when: dashboard_enabled
