@@ -13,6 +13,7 @@
   - mgrs
   - iscsigws
   - iscsi-gws # for backward compatibility only!
+  - ceph-grafana
 
   gather_facts: false
   any_errors_fatal: true
@@ -59,6 +60,9 @@
         name: ceph-validate
     - import_role:
         name: ceph-infra
+    - import_role:
+        name: ceph-node-exporter
+      when: dashboard.enabled
 
 - hosts: mons
   gather_facts: false
@@ -474,32 +478,6 @@
       delegate_to: "{{ groups[mon_group_name][0] }}"
       run_once: true
       when: not ceph_status.failed
-
-- hosts:
-  - ceph-grafana
-  # These are roles used by ceph-ansible
-  - mons
-  - agents
-  - osds
-  - mdss
-  - rgws
-  - nfss
-  - restapis
-  - rbdmirrors
-  - clients
-  - mgrs
-  - iscsigws
-  # This role is (so far) only used for testing
-  - cluster
-  become: true
-  tasks:
-    - import_role:
-        name: ceph-defaults
-      tags: ['ceph_update_config']
-      when: dashboard.enabled
-    - import_role:
-        name: ceph-node-exporter
-      when: dashboard.enabled
 
 - hosts: ceph-grafana
   become: true
