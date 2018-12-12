@@ -58,4 +58,5 @@
     group: root
     mode: 0400
   changed_when: false
+  become: true
   with_items: "{{ crt_files }}"
