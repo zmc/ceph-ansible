@@ -1,22 +1,24 @@
 ---
-- name: Check to see if the mgr is containerized
-  command: "{{ container_binary }}  inspect {{ item }}"
-  with_items:
-    - "ceph-mgr@{{ ansible_hostname }}"
-    - "ceph-mgr-{{ ansible_hostname }}"
-  register: mgr_container
-  failed_when: false
-  changed_when: false
-
-- name: Choose the correct container name
+- name: Set mgr_prefix default
   set_fact:
-    container_name: "{% for res in mgr_container.results if res.rc == 0 %}{{ res.item }}{% endfor %}"
-    mgr_prefix: "" # Set the default value for mgr_prefix
+    mgr_prefix: ""
 
-- name: Prefix the mgr command with a {{ container_binary }} command
-  set_fact:
-    mgr_prefix: "{{ container_binary }} exec {{ container_name }}"
-  when: container_name != ""
+- block:
+  - name: Check to see if the mgr is containerized
+    command: "{{ container_binary }} inspect ceph-mgr-{{ ansible_hostname }}"
+    register: mgr_container
+    failed_when: false
+    changed_when: false
+
+  - name: Choose the correct container name
+    set_fact:
+      container_name: "{% if mgr_container.rc == 0 %}ceph-mgr-{{ ansible_hostname }}{% endif %}"
+
+  - name: Prefix the mgr command with a {{ container_binary }} command
+    set_fact:
+      mgr_prefix: "{{ container_binary }} exec {{ container_name }}"
+    when: container_name != ""
+  when: container_binary != ""
 
 - name: Disable SSL for dashboard
   shell: |
