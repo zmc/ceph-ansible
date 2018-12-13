@@ -193,6 +193,15 @@
       state: enabled
     when: dashboard_enabled
 
+  - name: open mgr/prometheus port
+    firewalld:
+      port: "9283/tcp"
+      zone: "{{ ceph_dashboard_firewall_zone }}"
+      permanent: true
+      immediate: true
+      state: enabled
+    when: dashboard_enabled
+
   - name: open dashboard port
     firewalld:
       port: "{{ dashboard_port }}/tcp"
