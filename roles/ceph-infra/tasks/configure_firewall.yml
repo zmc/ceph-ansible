@@ -175,6 +175,16 @@
     tags:
       - firewall
 
+  - name: open grafana ports
+    firewalld:
+      port: "3000/tcp"
+      zone: "{{ ceph_dashboard_firewall_zone }}"
+      source: "{{ public_network }}"
+      permanent: true
+      immediate: true
+      state: enabled
+    when: dashboard_enabled
+
   when:
     - (firewalld_pkg_query.get('rc', 1) == 0
       or is_atomic)
