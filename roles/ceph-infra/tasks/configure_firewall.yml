@@ -175,7 +175,7 @@
     tags:
       - firewall
 
-  - name: open grafana ports
+  - name: open grafana port
     firewalld:
       port: "3000/tcp"
       zone: "{{ ceph_dashboard_firewall_zone }}"
@@ -184,9 +184,18 @@
       state: enabled
     when: dashboard_enabled
 
-  - name: Open ports for node_exporter
+  - name: open node_exporter port
     firewalld:
       port: "9100/tcp"
+      zone: "{{ ceph_dashboard_firewall_zone }}"
+      permanent: true
+      immediate: true
+      state: enabled
+    when: dashboard_enabled
+
+  - name: open dashboard port
+    firewalld:
+      port: "{{ dashboard_port }}/tcp"
       zone: "{{ ceph_dashboard_firewall_zone }}"
       permanent: true
       immediate: true
