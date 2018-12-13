@@ -179,7 +179,15 @@
     firewalld:
       port: "3000/tcp"
       zone: "{{ ceph_dashboard_firewall_zone }}"
-      source: "{{ public_network }}"
+      permanent: true
+      immediate: true
+      state: enabled
+    when: dashboard_enabled
+
+  - name: Open ports for node_exporter
+    firewalld:
+      port: "9100/tcp"
+      zone: "{{ ceph_dashboard_firewall_zone }}"
       permanent: true
       immediate: true
       state: enabled
