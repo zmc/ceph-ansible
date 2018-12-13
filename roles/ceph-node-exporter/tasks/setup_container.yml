@@ -30,7 +30,7 @@
     network_mode: host
     keep_volumes: true
     pull: true
-  notify: Restart service
+  notify: restart node-exporter service
 
 - name: Ship systemd service
   copy:
@@ -39,4 +39,4 @@
     owner: root
     group: root
     mode: 0644
-  notify: Restart service
+  notify: restart node-exporter service
