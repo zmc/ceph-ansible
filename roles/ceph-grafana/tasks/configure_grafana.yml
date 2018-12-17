@@ -72,13 +72,6 @@
     group: "grafana"
     recurse: true
 
-# TODO!!! Figure out how to distribute these !!!TODO
-- name: Store the dashboard files
-  copy:
-    src: "files/dashboards/"
-    dest: "{{ grafana.dashboards_path }}"
-    follow: true
-
 - name: Enable and start grafana
   service:
     name: grafana-server

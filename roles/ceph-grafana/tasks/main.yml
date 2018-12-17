@@ -2,5 +2,10 @@
 - name: Include setup_container.yml
   include_tasks: setup_container.yml
 
+- name: Install ceph-grafana-dashboards
+  package:
+    name: ceph-grafana-dashboards
+    state: present
+
 - name: Include configure_grafana.yml
   include_tasks: configure_grafana.yml
