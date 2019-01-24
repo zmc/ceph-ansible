@@ -666,7 +666,7 @@ ceph_docker_registry: "registry.access.redhat.com/rhceph/"
 #############
 # DASHBOARD #
 #############
-#dashboard_enabled: True
+#dashboard_enabled: False
 #dashboard_network_name: ceph-dashboard
 # Choose http or https
 # For https, you should set dashboard.crt/key and grafana.crt/key
