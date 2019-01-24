@@ -35,6 +35,7 @@
     src: dashboards-ceph-dashboard.yml
     dest: /etc/grafana/provisioning/dashboards/ceph-dashboard.yml
     mode: 0640
+  when: not containerized_deployment
 
 - name: Copy grafana SSL certificate file
   copy:

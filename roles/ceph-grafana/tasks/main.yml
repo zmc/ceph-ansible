@@ -6,6 +6,7 @@
   package:
     name: ceph-grafana-dashboards
     state: present
+  when: not containerized_deployment
 
 - name: Include configure_grafana.yml
   include_tasks: configure_grafana.yml
