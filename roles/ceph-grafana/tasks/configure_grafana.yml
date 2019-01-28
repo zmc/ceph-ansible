@@ -11,12 +11,9 @@
 
 - name: Make sure grafana configuration directories exist
   file:
-    path: "{{ item }}"
+    path: "/etc/grafana/provisioning/datasources"
     state: directory
     recurse: yes
-  with_items:
-    - "/etc/grafana/provisioning/datasources"
-    - "/etc/grafana/provisioning/dashboards"
 
 - name: Write grafana.ini
   template:
@@ -29,13 +26,6 @@
     src: datasources-ceph-dashboard.yml
     dest: /etc/grafana/provisioning/datasources/ceph-dashboard.yml
     mode: 0640
-
-- name: Write dashboards provisioning config file
-  template:
-    src: dashboards-ceph-dashboard.yml
-    dest: /etc/grafana/provisioning/dashboards/ceph-dashboard.yml
-    mode: 0640
-  when: not containerized_deployment
 
 - name: Copy grafana SSL certificate file
   copy:

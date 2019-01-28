@@ -683,11 +683,6 @@
         - "{{ ceph_docker_registry }}/prom/alertmanager"
       failed_when: false
 
-    - name: remove ceph-grafana-dashboards package
-      package:
-        name: ceph-grafana-dashboards
-        state: absent
-
     - name: remove data
       file:
         name: "{{ item }}"
