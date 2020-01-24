@@ -9,3 +9,4 @@ netaddr
 mock
 jmespath
 pytest-rerunfailures
+git+git://github.com/zmc/ceph-medic.git#egg=ceph-medic
